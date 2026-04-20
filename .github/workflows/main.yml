@@ -1,0 +1,32 @@
+name: fetch image
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: install
+        run: pip install requests
+
+      - name: run script
+        run: python get_image.py
+
+      - name: commit
+        run: |
+          git config --local user.name "github-actions"
+          git config --local user.email "actions@github.com"
+          git add .
+          git commit -m "add image" || echo "no changes"
+          git push
