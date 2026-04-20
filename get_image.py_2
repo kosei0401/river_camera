@@ -1,23 +1,22 @@
 import requests
 from datetime import datetime, timedelta
 
-# 20分前に変更（安定性UP）
+# 20分前（安定のため）
 now = datetime.now() - timedelta(minutes=20)
 
 # 分を10分単位に丸める
 minute = (now.minute // 10) * 10
 
-# 時刻フォーマット
+# URL用の時刻
 time_str = now.strftime(f"%Y-%m-%d-%H-{minute:02d}")
 
-# URL生成
+# 画像URL
 IMAGE_URL = f"https://www.bousai.pref.okayama.jp/data/camera-10min/176/{time_str}.jpg"
 
-# ★ここが重要：保存名を「現在時刻」にする
+# ★ここ重要：保存は“現在時刻”
 save_time = datetime.now().strftime("%Y%m%d_%H%M%S")
 filename = f"image_{save_time}.jpg"
 
-# ダウンロード
 response = requests.get(IMAGE_URL)
 
 if response.status_code == 200:
