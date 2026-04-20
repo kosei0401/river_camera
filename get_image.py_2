@@ -1,8 +1,11 @@
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
-# 20分前（安定のため）
-now = datetime.now() - timedelta(minutes=20)
+# 日本時間（JST）
+JST = timezone(timedelta(hours=9))
+
+# 現在時刻（日本時間）から20分前
+now = datetime.now(JST) - timedelta(minutes=20)
 
 # 分を10分単位に丸める
 minute = (now.minute // 10) * 10
@@ -10,11 +13,11 @@ minute = (now.minute // 10) * 10
 # URL用の時刻
 time_str = now.strftime(f"%Y-%m-%d-%H-{minute:02d}")
 
-# 画像URL
+# URL生成
 IMAGE_URL = f"https://www.bousai.pref.okayama.jp/data/camera-10min/176/{time_str}.jpg"
 
-# ★ここ重要：保存は“現在時刻”
-save_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+# 保存ファイル名（現在時刻）
+save_time = datetime.now(JST).strftime("%Y%m%d_%H%M%S")
 filename = f"image_{save_time}.jpg"
 
 response = requests.get(IMAGE_URL)
