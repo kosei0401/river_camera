@@ -21,7 +21,7 @@ jobs:
         run: pip install requests
 
       - name: run script
-        run: python get_image.py
+        run: python get_image.py_2
 
       - name: commit
         run: |
