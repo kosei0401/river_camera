@@ -1,8 +1,8 @@
 import requests
 from datetime import datetime, timedelta
 
-# 10分前の時刻を取得（カメラは遅れて更新されるため）
-now = datetime.now() - timedelta(minutes=10)
+# 20分前に変更（安定性UP）
+now = datetime.now() - timedelta(minutes=20)
 
 # 分を10分単位に丸める
 minute = (now.minute // 10) * 10
@@ -13,8 +13,9 @@ time_str = now.strftime(f"%Y-%m-%d-%H-{minute:02d}")
 # URL生成
 IMAGE_URL = f"https://www.bousai.pref.okayama.jp/data/camera-10min/176/{time_str}.jpg"
 
-# 保存ファイル名
-filename = f"image_{time_str}.jpg"
+# ★ここが重要：保存名を「現在時刻」にする
+save_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+filename = f"image_{save_time}.jpg"
 
 # ダウンロード
 response = requests.get(IMAGE_URL)
