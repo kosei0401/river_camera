@@ -1,32 +1,39 @@
 import requests
 from datetime import datetime, timedelta, timezone
+import time
 
 JST = timezone(timedelta(hours=9))
 
-# 現在時刻（日本時間）
 now = datetime.now(JST)
 
-# 10分刻みで過去を最大2時間分探索
-for i in range(0, 120, 10):
-    target = now - timedelta(minutes=i)
+# 30分前
+target = now - timedelta(minutes=30)
 
-    minute = (target.minute // 10) * 10
-    target = target.replace(minute=minute, second=0, microsecond=0)
+minute = (target.minute // 10) * 10
+target = target.replace(minute=minute, second=0, microsecond=0)
 
-    time_str = target.strftime("%Y-%m-%d-%H-%M")
-    url = f"https://www.bousai.pref.okayama.jp/data/camera-10min/176/{time_str}.jpg"
+time_str = target.strftime("%Y-%m-%d-%H-%M")
 
-    res = requests.get(url)
+# ★ここ重要：キャッシュ回避
+timestamp = int(time.time())
 
-    if res.status_code == 200 and len(res.content) > 10000:
-        # 正常画像っぽいものだけ保存
-        save_time = datetime.now(JST).strftime("%Y%m%d_%H%M%S")
-        filename = f"image_{save_time}.jpg"
+IMAGE_URL = f"https://www.bousai.pref.okayama.jp/data/camera-10min/176/{time_str}.jpg?t={timestamp}"
 
-        with open(filename, "wb") as f:
-            f.write(res.content)
+# 保存名
+save_time = now.strftime("%Y%m%d_%H%M%S")
+filename = f"image_{save_time}.jpg"
 
-        print("saved:", filename, url)
-        break
+# ヘッダー追加（これも効く）
+headers = {
+    "Cache-Control": "no-cache",
+    "Pragma": "no-cache"
+}
+
+response = requests.get(IMAGE_URL, headers=headers)
+
+if response.status_code == 200:
+    with open(filename, "wb") as f:
+        f.write(response.content)
+    print("saved:", filename, IMAGE_URL)
 else:
-    print("no valid image found")
+    print("failed:", IMAGE_URL)
