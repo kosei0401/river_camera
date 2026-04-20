@@ -31,5 +31,5 @@ jobs:
           git config --local user.name "github-actions"
           git config --local user.email "actions@github.com"
           git add .
-          git commit -m "add image" || echo "no changes"
+          git commit -m "add image $(date)" || echo "no changes"
           git push
