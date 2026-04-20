@@ -1,35 +1,32 @@
 import requests
 from datetime import datetime, timedelta, timezone
 
-# JST（日本時間）
 JST = timezone(timedelta(hours=9))
 
 # 現在時刻（日本時間）
 now = datetime.now(JST)
 
-# 30分前にする（確実に存在する時間）
-now = now - timedelta(minutes=30)
+# 10分刻みで過去を最大2時間分探索
+for i in range(0, 120, 10):
+    target = now - timedelta(minutes=i)
 
-# 分を10分単位に丸める
-minute = (now.minute // 10) * 10
-now = now.replace(minute=minute, second=0, microsecond=0)
+    minute = (target.minute // 10) * 10
+    target = target.replace(minute=minute, second=0, microsecond=0)
 
-# URL用
-time_str = now.strftime("%Y-%m-%d-%H-%M")
+    time_str = target.strftime("%Y-%m-%d-%H-%M")
+    url = f"https://www.bousai.pref.okayama.jp/data/camera-10min/176/{time_str}.jpg"
 
-# URL
-IMAGE_URL = f"https://www.bousai.pref.okayama.jp/data/camera-10min/176/{time_str}.jpg"
+    res = requests.get(url)
 
-# 保存名（現在時刻）
-save_time = datetime.now(JST).strftime("%Y%m%d_%H%M%S")
-filename = f"image_{save_time}.jpg"
+    if res.status_code == 200 and len(res.content) > 10000:
+        # 正常画像っぽいものだけ保存
+        save_time = datetime.now(JST).strftime("%Y%m%d_%H%M%S")
+        filename = f"image_{save_time}.jpg"
 
-# 取得
-response = requests.get(IMAGE_URL)
+        with open(filename, "wb") as f:
+            f.write(res.content)
 
-if response.status_code == 200:
-    with open(filename, "wb") as f:
-        f.write(response.content)
-    print("saved", filename, IMAGE_URL)
+        print("saved:", filename, url)
+        break
 else:
-    print("failed", IMAGE_URL)
+    print("no valid image found")
