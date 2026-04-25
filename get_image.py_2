@@ -2,57 +2,51 @@ import requests
 from datetime import datetime, timedelta, timezone
 import hashlib
 import os
+import random
 
 JST = timezone(timedelta(hours=9))
-
-# 現在時刻（日本時間）
 now = datetime.now(JST)
 
-# 少し前の画像を狙う（安定のため）
-target = now - timedelta(minutes=30)
+# 少しランダムに遅らせる（±5分）
+offset = 30 + random.randint(-5, 5)
+target = now - timedelta(minutes=offset)
 
 minute = (target.minute // 10) * 10
 target = target.replace(minute=minute, second=0, microsecond=0)
 
 time_str = target.strftime("%Y-%m-%d-%H-%M")
 
-# URL
 url = f"https://www.bousai.pref.okayama.jp/data/camera-10min/176/{time_str}.jpg"
 
-# ダウンロード
-response = requests.get(url)
+headers = {
+    "User-Agent": "Mozilla/5.0"
+}
 
-if response.status_code == 200:
+response = requests.get(url, headers=headers)
 
-    # 画像のハッシュを計算
-    new_hash = hashlib.md5(response.content).hexdigest()
+if response.status_code != 200:
+    print("failed, skip")
+    exit()
 
-    hash_file = "last_hash.txt"
+new_hash = hashlib.md5(response.content).hexdigest()
 
-    # 前回のハッシュを読む
-    if os.path.exists(hash_file):
-        with open(hash_file, "r") as f:
-            old_hash = f.read()
-    else:
-        old_hash = None
+hash_file = "last_hash.txt"
 
-    # 比較
-    if new_hash != old_hash:
-        # 新しい画像だけ保存
-        save_time = now.strftime("%Y%m%d_%H%M%S")
-        filename = f"image_{save_time}.jpg"
-
-        with open(filename, "wb") as f:
-            f.write(response.content)
-
-        # ハッシュ更新
-        with open(hash_file, "w") as f:
-            f.write(new_hash)
-
-        print("saved NEW image:", filename)
-
-    else:
-        print("same image, skipped")
-
+if os.path.exists(hash_file):
+    with open(hash_file, "r") as f:
+        old_hash = f.read()
 else:
-    print("failed:", url)
+    old_hash = None
+
+if new_hash != old_hash:
+    filename = f"image_{now.strftime('%Y%m%d_%H%M%S')}.jpg"
+
+    with open(filename, "wb") as f:
+        f.write(response.content)
+
+    with open(hash_file, "w") as f:
+        f.write(new_hash)
+
+    print("saved:", filename)
+else:
+    print("same, skipped")
